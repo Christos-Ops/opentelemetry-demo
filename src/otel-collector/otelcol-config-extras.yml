@@ -7,8 +7,8 @@ exporters:
 service:
   pipelines:
     traces:
-      exporters: [otlp_grpc/jaeger, debug, span_metrics, otlp_grpc/sre_backend]
+      exporters: [debug, span_metrics, otlp_grpc/sre_backend]
     metrics:
-      exporters: [otlp_http/prometheus, debug, otlp_grpc/sre_backend]
+      exporters: [debug, otlp_grpc/sre_backend]
     logs:
-      exporters: [opensearch, debug, otlp_grpc/sre_backend]
+      exporters: [debug, otlp_grpc/sre_backend]
