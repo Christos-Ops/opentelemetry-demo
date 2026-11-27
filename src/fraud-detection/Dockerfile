@@ -2,12 +2,22 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-FROM --platform=${BUILDPLATFORM} docker.io/library/gradle:9.9.1-jdk17@sha256:1b8675f710da5ad837e711758886dc63524877a3efa9ee96ffd2e4f6fef07211 AS builder
+FROM --platform=${BUILDPLATFORM} docker.io/library/gradle:9.9.2-jdk17-corretto@sha256:5967ccdd3bdd9f51e992911f4cbf742b22256aa912f804482c69658345ed69e0 AS base
 
 WORKDIR /usr/src/app/
 
 COPY ./src/fraud-detection/ ./
 COPY ./pb/ ./src/main/proto/
+
+FROM base AS test
+
+RUN gradle test --no-daemon \
+  && touch /tmp/fraud-detection-tests-passed
+
+FROM base AS builder
+
+# BuildKit skips unused stages, so depend on the test marker to require tests before building the release.
+COPY --from=test /tmp/fraud-detection-tests-passed /tmp/fraud-detection-tests-passed
 
 RUN gradle shadowJar
 
@@ -20,6 +30,7 @@ WORKDIR /usr/src/app/
 
 ADD --chmod=644 https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v$OTEL_JAVA_AGENT_VERSION/opentelemetry-javaagent.jar /usr/src/app/opentelemetry-javaagent.jar
 ENV JAVA_TOOL_OPTIONS="-javaagent:/usr/src/app/opentelemetry-javaagent.jar -Xmx180m"
+ENV OTEL_INSTRUMENTATION_LOG4J_APPENDER_EXPERIMENTAL_MDC_ATTRIBUTES_INCLUDED="messaging.destination.name,messaging.consumer.group.name"
 
 COPY --from=builder /usr/src/app/build/libs/fraud-detection-1.0-all.jar fraud-detection-1.0-all.jar
 

@@ -1,12 +1,15 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM docker.io/library/node:26.12.1-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0 AS builder
+FROM docker.io/library/node:26.13.0-slim@sha256:5adad64f9a1fca2d51972caa65983634c8a774eb300d72b20f7f2a0f60368072 AS builder
 
 WORKDIR /app
 
 COPY ./src/frontend/package.json package.json
 COPY ./src/frontend/package-lock.json package-lock.json
+
+# The Cypress binary is only needed for e2e tests, which run from Dockerfile.cypress
+ENV CYPRESS_INSTALL_BINARY=0
 
 RUN npm ci
 
@@ -34,7 +37,7 @@ RUN npm run build
 
 # -----------------------------------------------------------------------------
 
-FROM docker.io/library/node:26.12.1-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0 AS deps
+FROM docker.io/library/node:26.13.0-slim@sha256:5adad64f9a1fca2d51972caa65983634c8a774eb300d72b20f7f2a0f60368072 AS deps
 
 WORKDIR /app
 
@@ -45,7 +48,7 @@ RUN npm ci --omit=dev
 
 # -----------------------------------------------------------------------------
 
-FROM gcr.io/distroless/nodejs24-debian13:nonroot@sha256:6abfcb367ebc291572c774c1592a986be2ab26a2486f73093401327495a5962a
+FROM gcr.io/distroless/nodejs26-debian13:nonroot@sha256:ffa8a7545403036c94ec76674b5dbac2d425af2d679147cdf3e30180071487b7
 
 WORKDIR /app
 
